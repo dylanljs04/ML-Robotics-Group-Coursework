@@ -1,4 +1,4 @@
-imds = imageDatastore("DataSet","IncludeSubfolders",true,"LabelSource","foldernames");
+imds = imageDatastore("Dataset","IncludeSubfolders",true,"LabelSource","foldernames");
 [imdsTrain,imdsValidation] = splitEachLabel(imds,0.7,'randomized');
 
 % get labels for training set
@@ -32,6 +32,7 @@ augimdsTrain = augmentedImageDatastore(inputSize(1:2),imdsTrain, ...
 % auto-resize validation images
 augimdsValidation = augmentedImageDatastore(inputSize(1:2),imdsValidation);
 
+% training options
 options = trainingOptions("sgdm", ...
     MiniBatchSize=10, ...
     MaxEpochs=6, ...
@@ -43,8 +44,10 @@ options = trainingOptions("sgdm", ...
     Verbose=false, ...
     Plots="training-progress");
 
+% train net with cross entropy loss
 net = trainnet(augimdsTrain,net,"crossentropy",options);
 
+% get four predictions and show them up
 scores = minibatchpredict(net,augimdsValidation);
 YPred = scores2label(scores,classNames);
 
