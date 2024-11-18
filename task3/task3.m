@@ -1,22 +1,36 @@
-imds = imageDatastore("Dataset","IncludeSubfolders",true,"LabelSource","foldernames");
+
+% hyper-parameters >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+datasetPath = "Dataset";
+% choose from "Alex" and "Google"
+backbone = "Google";
+lr = 1e-4;
+n_epoch = 6;
+batch_size = 10;
+
+% load dataset >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+imds = imageDatastore(datasetPath,"IncludeSubfolders",true,"LabelSource","foldernames");
 [imdsTrain,imdsValidation] = splitEachLabel(imds,0.7,'randomized');
 
-% get labels for training set
-classNames = categories(imdsTrain.Labels);
-numClasses = numel(classNames);
+% get labels for training set >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+classNames = categories(imdsTrain.Labels); % get the names of classes
+numClasses = numel(classNames); % get the number of classes
 
-% load pre-trained network
-net = imagePretrainedNetwork("googlenet",NumClasses=numClasses);
-% net = imagePretrainedNetwork("alexnet",NumClasses=numClasses);
-net = setLearnRateFactor(net,"fc8/Weights",20);
-net = setLearnRateFactor(net,"fc8/Bias",20);
+% load pre-trained network >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+if backbone == "Google" % load GoogLeNet
+    net = imagePretrainedNetwork("googlenet",NumClasses=numClasses);
+    disp("GoogLeNet for transfer backbone.")
+elseif backbone == "Alex" % load AlexNet
+    net = imagePretrainedNetwork("alexnet",NumClasses=numClasses);
+    disp("AlexNet for transfer backbone.")
+end
 
 % get the input size of network
 inputSize = net.Layers(1).InputSize;
 
 % open the visual analyzer
 analyzeNetwork(net)
- 
+
 
 % apply data augmentation to avoid overfitting
 randomPixelRange = [-30 30];
@@ -34,10 +48,10 @@ augimdsValidation = augmentedImageDatastore(inputSize(1:2),imdsValidation);
 
 % training options
 options = trainingOptions("sgdm", ...
-    MiniBatchSize=10, ...
-    MaxEpochs=6, ...
+    MiniBatchSize=batch_size, ...
+    MaxEpochs=n_epoch, ...
     Metrics="accuracy", ...
-    InitialLearnRate=1e-4, ...
+    InitialLearnRate=lr, ...
     Shuffle="every-epoch", ...
     ValidationData=augimdsValidation, ...
     ValidationFrequency=3, ...
