@@ -46,10 +46,12 @@ iw = net.iw;
 lw = net.lw;
 b = net.b;
 
-% plot model predictions
+%% plot model predictions
 net_output = sim(net,xtest);
 plot(xtest,net_output)
 hold off
+
+%% draw relus if applicable
 
 % draw relus if the hidden activation is relu and output is pure linear
 % and the number of cells in hidden layer is 5
