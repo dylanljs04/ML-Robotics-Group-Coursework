@@ -5,7 +5,7 @@ clear;
 % Parameters
 gamma = 0.9;            % Discount factor
 alpha = 0.1;            % Learning rate
-num_episodes = 100000;    % Number of episodes
+num_episodes = 10000;    % Number of episodes
 max_epsilon = 0.9;      % exploration rate (max)
 min_epsilon = 0.1;      % exploration rate (min)
 lambda = 0.006;         % Decay Factor
