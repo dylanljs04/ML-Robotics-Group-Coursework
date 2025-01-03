@@ -1,21 +1,21 @@
 
-% hyper-parameters >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-datasetPath = "Dataset";
+%% hyper-parameters >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+datasetPath = "MixDataset";
 % choose from "Alex" and "Google"
 backbone = "Google";
 lr = 1e-4;
-n_epoch = 6;
-batch_size = 10;
+n_epoch = 5;
+batch_size = 20;
 
-% load dataset >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+%% load dataset >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 imds = imageDatastore(datasetPath,"IncludeSubfolders",true,"LabelSource","foldernames");
 [imdsTrain,imdsValidation] = splitEachLabel(imds,0.7,'randomized');
 
-% get labels for training set >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+%% get classes for training set >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 classNames = categories(imdsTrain.Labels); % get the names of classes
 numClasses = numel(classNames); % get the number of classes
 
-% load pre-trained network >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+%% load pre-trained network >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 if backbone == "Google" % load GoogLeNet
     net = imagePretrainedNetwork("googlenet",NumClasses=numClasses);
@@ -25,29 +25,30 @@ elseif backbone == "Alex" % load AlexNet
     disp("AlexNet for transfer backbone.")
 end
 
-% get the input size of network
+%% get the input size of network
 inputSize = net.Layers(1).InputSize;
 
-% open the visual analyzer
+%% open the visual analyzer
 analyzeNetwork(net)
 
 
-% apply data augmentation to avoid overfitting
+%% apply data augmentation to avoid overfitting
 randomPixelRange = [-30 30];
 imageAugmenter = imageDataAugmenter( ...
     'RandXReflection',true, ...
     'RandXTranslation',randomPixelRange, ...
     'RandYTranslation',randomPixelRange);
 
-% resize training images
+%% resize training images
 augimdsTrain = augmentedImageDatastore(inputSize(1:2),imdsTrain, ...
     'DataAugmentation',imageAugmenter);
+% augimdsTrain = augmentedImageDatastore(inputSize(1:2),imdsTrain);
 
-% auto-resize validation images
+%% auto-resize validation images
 augimdsValidation = augmentedImageDatastore(inputSize(1:2),imdsValidation);
 
-% training options
-options = trainingOptions("sgdm", ...
+%% training options
+options = trainingOptions("rmsprop", ...
     MiniBatchSize=batch_size, ...
     MaxEpochs=n_epoch, ...
     Metrics="accuracy", ...
@@ -58,10 +59,10 @@ options = trainingOptions("sgdm", ...
     Verbose=false, ...
     Plots="training-progress");
 
-% train net with cross entropy loss
+%% train net with cross entropy loss
 net = trainnet(augimdsTrain,net,"crossentropy",options);
 
-% get four predictions and show them up
+%% get four predictions and show them up
 scores = minibatchpredict(net,augimdsValidation);
 YPred = scores2label(scores,classNames);
 
