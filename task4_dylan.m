@@ -5,7 +5,7 @@ clear;
 % Parameters
 gamma = 0.9;            % Discount factor
 alpha = 0.1;            % Learning rate
-num_episodes = 10000;    % Number of episodes
+num_episodes = 1000;    % Number of episodes
 max_epsilon = 0.9;      % exploration rate (max)
 min_epsilon = 0.1;      % exploration rate (min)
 lambda = 0.006;         % Decay Factor
@@ -15,10 +15,13 @@ start_state = 1;        % State of the start point (1...12)
 
 % Calculates the Q-table using established parameters
 q_table = calculate_q_table(gamma, alpha, max_epsilon, min_epsilon, lambda, num_episodes, start_state);
+
+% Displays Q-table and Best action to be taken at each cell
 display_q_table(q_table)
 display_best_action(q_table)
 
 %% Plotting the epsilon decay 
+% Just to visualise the value of epsilon over each episode
 
 epsilon_val = zeros(length(num_episodes));
 for episode = 1:num_episodes
@@ -38,10 +41,9 @@ grid on;
 function q_table = calculate_q_table(gamma, alpha, max_epsilon, min_epsilon, lambda, num_episodes, start_state)
     % Initialise Q-table
     q_table = zeros(12, 4);
-    % actions_name = {'Up', 'Right', 'Down', 'Left'};
-
     
     for episode = 1:num_episodes
+        % Calculates epsilon for this episode
         epsilon = calc_epsilon(max_epsilon, min_epsilon, lambda, episode);
 
         % Resets the start state very episode
@@ -49,7 +51,6 @@ function q_table = calculate_q_table(gamma, alpha, max_epsilon, min_epsilon, lam
 
         % Run until we reach a terminal state
         terminal = false;
-        i = 1;
         while ~terminal
             % Select action using epsilon-greedy
             % Actions: 1=Up, 2=Right, 3=Down, 4=Left
@@ -62,7 +63,7 @@ function q_table = calculate_q_table(gamma, alpha, max_epsilon, min_epsilon, lam
             % Get next state
             next_state = get_next_state(state, action);
             
-            % Get the reward of being in the next state
+            % Get the reward for being in the next state
             if isequal(next_state, 8)
                 reward = -10;
                 terminal = true;
@@ -73,27 +74,14 @@ function q_table = calculate_q_table(gamma, alpha, max_epsilon, min_epsilon, lam
                 reward = -1;
             end
 
-            % Calculates the new Q-value and update the table
+            % Calculates the new Q-value and updates the table
             sample_q = reward + gamma * max(q_table(next_state, :));
             updated_q = q_table(state,action) + alpha*(sample_q - q_table(state,action));
             q_table(state,action) = updated_q;
 
-
-            % if i < 4
-            %     disp(["Q-table Iteration" episode i])
-            %     disp(["updated q" updated_q])
-            %     disp([state "to" next_state])
-            %     disp(["action" actions_name{action}])
-            %     display_q_table(q_table)
-            %     i = i+1;
-            % end
-
             % Move to next state
             state = next_state;
         end
-        % disp(["Full Q-table" episode])
-        % display_q_table(q_table);
-
     end
 end
 
@@ -102,13 +90,13 @@ end
 % /////////////   HELPER FUNCTIONS  //////////////////
 % ------------------------------------------------------------
 
+% Calculates the value of epsilon given the episode number
 function epsilon = calc_epsilon(epsilon_max, epsilon_min, lambda, episode)
     epsilon = epsilon_max * exp(-lambda * episode);
     epsilon = max(epsilon, epsilon_min);
 end
 
-% Gets the next cell state given the current state and the action the agent
-% performs
+% Gets the next cell state given the current state and the agents action
 function next_state = get_next_state(state, action)
     % Convert the current state to [row,col]
     [row, col] = state_to_row_col(state);
@@ -124,8 +112,8 @@ function next_state = get_next_state(state, action)
             col = col - 1;
     end
 
+    % stay in the same place if moved to state 6 or moved out of bounds
     if row < 1 || row > 3 || col < 1 || col > 4 || (isequal(row,2) && isequal(col, 2))
-        % stay in the same place if moved to state 6 or moved out of bounds
         next_state = state;
     else
         next_state = row_col_to_state(row, col);
